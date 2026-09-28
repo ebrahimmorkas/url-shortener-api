@@ -8,6 +8,8 @@ import {
   type ZodTypeProvider,
 } from 'fastify-type-provider-zod';
 import type { AppContext } from './context.js';
+import { authRoutes } from './modules/auth/auth.routes.js';
+import { registerAuth } from './modules/auth/auth.plugin.js';
 import { registerErrorHandler } from './plugins/error-handler.js';
 import { healthRoutes } from './routes/health.js';
 
@@ -39,7 +41,10 @@ export async function buildApp(ctx: AppContext) {
   });
   registerErrorHandler(app);
 
+  await registerAuth(app);
+
   await app.register(healthRoutes);
+  await app.register(authRoutes, { prefix: '/api/v1' });
 
   return app;
 }
