@@ -1,3 +1,4 @@
+import { sql } from 'drizzle-orm';
 import { buildApp, type App } from '../src/app.js';
 import { loadConfig } from '../src/config/env.js';
 import { createDb } from '../src/db/client.js';
@@ -22,4 +23,8 @@ export async function createTestApp(overrides: Record<string, string> = {}): Pro
       await redis?.quit();
     },
   };
+}
+
+export async function resetDb(t: TestApp) {
+  await t.app.ctx.db.execute(sql`TRUNCATE clicks, links, api_keys, users RESTART IDENTITY CASCADE`);
 }
