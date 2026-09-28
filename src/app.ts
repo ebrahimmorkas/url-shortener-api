@@ -9,6 +9,7 @@ import {
 } from 'fastify-type-provider-zod';
 import type { AppContext } from './context.js';
 import { authRoutes } from './modules/auth/auth.routes.js';
+import { linksRoutes } from './modules/links/links.routes.js';
 import { registerAuth } from './modules/auth/auth.plugin.js';
 import { registerErrorHandler } from './plugins/error-handler.js';
 import { healthRoutes } from './routes/health.js';
@@ -45,6 +46,7 @@ export async function buildApp(ctx: AppContext) {
 
   await app.register(healthRoutes);
   await app.register(authRoutes, { prefix: '/api/v1' });
+  await app.register(linksRoutes, { prefix: '/api/v1' });
 
   return app;
 }
