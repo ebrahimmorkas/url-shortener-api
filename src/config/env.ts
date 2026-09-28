@@ -15,6 +15,7 @@ export const configSchema = z.object({
   BASE_URL: z.url().default('http://localhost:3002'),
 
   DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
+  MIGRATE_ON_START: booleanFromString.default(true),
   JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters'),
 
   REDIS_ENABLED: booleanFromString,

@@ -1,11 +1,14 @@
 import { buildApp } from './app.js';
 import { loadConfig } from './config/env.js';
 import { createDb } from './db/client.js';
+import { runMigrations } from './db/migrate.js';
 import { createRedis } from './lib/redis.js';
 
 const config = loadConfig();
 const { db, pool } = createDb(config.DATABASE_URL);
 const redis = createRedis(config.REDIS_ENABLED, config.REDIS_URL);
+
+if (config.MIGRATE_ON_START) await runMigrations(db);
 
 const app = await buildApp({ config, db, redis });
 
