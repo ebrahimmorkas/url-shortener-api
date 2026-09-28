@@ -48,7 +48,7 @@ const updateBody = z
 const idParams = z.object({ id: z.uuid() });
 
 export const linksRoutes: FastifyPluginAsyncZod = async (app) => {
-  const { db, config } = app.ctx;
+  const { db, config, cache } = app.ctx;
   const service = new LinksService(db, config.BASE_URL);
   const toDto = (link: Parameters<typeof serializeLink>[0]) => serializeLink(link, config.BASE_URL);
   const security: Record<string, string[]>[] = [{ bearerAuth: [] }, { apiKey: [] }];
@@ -124,6 +124,8 @@ export const linksRoutes: FastifyPluginAsyncZod = async (app) => {
     },
     async (request) => {
       const link = await service.update(request.user.id, request.params.id, request.body);
+      // Redirects must see the new destination/state immediately.
+      await cache.delete(link.code);
       return { link: toDto(link) };
     },
   );
@@ -139,7 +141,8 @@ export const linksRoutes: FastifyPluginAsyncZod = async (app) => {
       },
     },
     async (request, reply) => {
-      await service.delete(request.user.id, request.params.id);
+      const link = await service.delete(request.user.id, request.params.id);
+      await cache.delete(link.code);
       return reply.status(204).send(null);
     },
   );
