@@ -7,15 +7,17 @@ import {
   validatorCompiler,
   type ZodTypeProvider,
 } from 'fastify-type-provider-zod';
-import type { AppContext } from './context.js';
+import type { AppContext, BaseContext } from './context.js';
 import { authRoutes } from './modules/auth/auth.routes.js';
 import { linksRoutes } from './modules/links/links.routes.js';
 import { registerAuth } from './modules/auth/auth.plugin.js';
+import { redirectRoutes } from './modules/redirects/redirect.routes.js';
 import { registerErrorHandler } from './plugins/error-handler.js';
 import { healthRoutes } from './routes/health.js';
+import { createServices } from './services.js';
 
-export async function buildApp(ctx: AppContext) {
-  const { config } = ctx;
+export async function buildApp(base: BaseContext) {
+  const { config } = base;
   const app = Fastify({
     trustProxy: true,
     requestIdHeader: 'x-request-id',
@@ -31,7 +33,11 @@ export async function buildApp(ctx: AppContext) {
 
   app.setValidatorCompiler(validatorCompiler);
   app.setSerializerCompiler(serializerCompiler);
+  const ctx: AppContext = { ...base, ...createServices(config, base.db, base.redis, app.log) };
   app.decorate('ctx', ctx);
+  app.addHook('onReady', () => ctx.clicks.start());
+  // Flush buffered clicks before shutting down so none are lost.
+  app.addHook('onClose', () => ctx.clicks.close());
   app.addHook('onSend', async (request, reply) => {
     reply.header('x-request-id', request.id);
   });
@@ -47,6 +53,8 @@ export async function buildApp(ctx: AppContext) {
   await app.register(healthRoutes);
   await app.register(authRoutes, { prefix: '/api/v1' });
   await app.register(linksRoutes, { prefix: '/api/v1' });
+  // Registered last: the catch-all short-code route.
+  await app.register(redirectRoutes);
 
   return app;
 }
