@@ -13,7 +13,9 @@ import { authRoutes } from './modules/auth/auth.routes.js';
 import { linksRoutes } from './modules/links/links.routes.js';
 import { registerAuth } from './modules/auth/auth.plugin.js';
 import { redirectRoutes } from './modules/redirects/redirect.routes.js';
+import { registerDocs } from './plugins/docs.js';
 import { registerErrorHandler } from './plugins/error-handler.js';
+import { registerRateLimit } from './plugins/rate-limit.js';
 import { healthRoutes } from './routes/health.js';
 import { createServices } from './services.js';
 
@@ -48,6 +50,8 @@ export async function buildApp(base: BaseContext) {
     origin: config.CORS_ORIGIN === '*' ? true : config.CORS_ORIGIN.split(','),
   });
   registerErrorHandler(app);
+  await registerRateLimit(app);
+  await registerDocs(app);
 
   await registerAuth(app);
 
