@@ -1,15 +1,53 @@
-# URL Shortener API
+# URL Shortener API + dashboard
 
 [![CI](https://github.com/ebrahimmorkas/url-shortener-api/actions/workflows/ci.yml/badge.svg)](https://github.com/ebrahimmorkas/url-shortener-api/actions/workflows/ci.yml)
 ![Node](https://img.shields.io/badge/node-%3E%3D20-339933?logo=node.js&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)
 ![Fastify](https://img.shields.io/badge/Fastify-5-000000?logo=fastify&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Drizzle-4169E1?logo=postgresql&logoColor=white)
+![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
 A URL shortener with click analytics, in the style of Bitly: short links with custom aliases,
 expiry dates, click caps and QR codes, a redirect path that stays fast under load, and
 per-link statistics. Built with Node.js, TypeScript, Fastify and PostgreSQL.
+
+It ships with **Snip**, a React + TypeScript dashboard in [`client/`](client) for creating links
+and reading their analytics.
+
+![Link analytics: clicks over time and breakdowns](docs/screenshots/analytics.png)
+
+## Web client (Snip)
+
+| Links and overview                           | Analytics in dark mode                                 |
+| -------------------------------------------- | ------------------------------------------------------ |
+| ![Dashboard](docs/screenshots/dashboard.png) | ![Dark analytics](docs/screenshots/analytics-dark.png) |
+| **API keys, shown once**                     |                                                        |
+| ![API keys](docs/screenshots/api-keys.png)   |                                                        |
+
+What it does:
+
+- **Shorten a link** with an optional alias, title, expiry and click limit. The short URL is
+  copied to the clipboard.
+- **Links table** with search, "load more" (cursor pagination), copy buttons and a status badge
+  that explains why a link no longer redirects (disabled, expired, click limit reached).
+- **Analytics per link:** range switch (24 hours hourly, 7 or 30 days daily), clicks and unique
+  visitors over time, top referrers, countries, devices, browsers and operating systems, and
+  the QR code as a downloadable PNG.
+- **API keys:** create, list and revoke. The secret is displayed once.
+- "Continue as demo user", light and dark themes, responsive layout.
+
+How it is built: React 19, TypeScript, Vite, React Router, TanStack Query (infinite query for the
+table, previous data kept while a new range loads), React Hook Form + Zod, Tailwind CSS v4 and
+Recharts. Chart colours were checked for colour-blind separation and contrast in both themes,
+every chart has a table view, and breakdowns label values in text, not by colour alone. Status,
+range and formatting logic are pure functions with unit tests.
+
+```bash
+npm run db:seed    # demo@example.com / Password123, 5 links, a month of clicks
+npm run dev        # API on :3002
+cd client && npm install && npm run dev   # http://localhost:5178
+```
 
 ## Highlights
 
@@ -187,6 +225,7 @@ src/
 │   ├── redirects/         # cached redirect, click queue and batch writer
 │   └── analytics/         # per-link stats and account overview
 └── routes/health.ts
+client/                    # Snip React dashboard
 drizzle/                   # SQL migrations
 test/                      # Vitest integration suites
 ```
