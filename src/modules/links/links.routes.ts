@@ -53,7 +53,8 @@ export const linksRoutes: FastifyPluginAsyncZod = async (app) => {
   const toDto = (link: Parameters<typeof serializeLink>[0]) => serializeLink(link, config.BASE_URL);
   const security: Record<string, string[]>[] = [{ bearerAuth: [] }, { apiKey: [] }];
 
-  app.addHook('onRequest', app.authenticate);
+  // preValidation, so the rate limiter (onRequest) counts unauthenticated requests too.
+  app.addHook('preValidation', app.authenticate);
 
   app.post(
     '/links',

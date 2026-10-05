@@ -1,0 +1,51 @@
+# Without Redis (in-memory cache, local rate limits, in-process click buffer):
+#   docker compose up --build
+#
+# With Redis (shared cache, distributed rate limits, BullMQ click queue):
+#   REDIS_ENABLED=true docker compose --profile redis up --build
+
+services:
+  api:
+    build: .
+    ports:
+      - '3002:3002'
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/shortener
+      JWT_SECRET: ${JWT_SECRET:-docker-dev-secret-change-me-please-32+}
+      BASE_URL: ${BASE_URL:-http://localhost:3002}
+      REDIS_ENABLED: ${REDIS_ENABLED:-false}
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: shortener
+    ports:
+      - '5432:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    profiles: ['redis']
+    ports:
+      - '6379:6379'
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  pgdata:
