@@ -22,7 +22,8 @@ export const analyticsRoutes: FastifyPluginAsyncZod = async (app) => {
   const linksService = new LinksService(db, config.BASE_URL);
   const security: Record<string, string[]>[] = [{ bearerAuth: [] }, { apiKey: [] }];
 
-  app.addHook('onRequest', app.authenticate);
+  // preValidation, so the rate limiter (onRequest) counts unauthenticated requests too.
+  app.addHook('preValidation', app.authenticate);
 
   /** Defaults: last 30 days by day, or last 24 hours by hour. */
   const resolveRange = (query: z.infer<typeof rangeQuery>) => {

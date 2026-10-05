@@ -5,6 +5,7 @@ import { links } from '../../db/schema.js';
 import { Gone, NotFound } from '../../lib/errors.js';
 import type { CachedLink } from './redirect-cache.js';
 import { parseUserAgent, referrerHost, visitorHash } from './visitor.js';
+import { redirectLimit } from '../../plugins/rate-limit.js';
 
 const CODE_PATTERN = /^[A-Za-z0-9_-]{1,32}$/;
 const NEGATIVE_CACHE_TTL_SECONDS = 30;
@@ -51,7 +52,10 @@ export const redirectRoutes: FastifyPluginAsyncZod = async (app) => {
 
   app.get(
     '/:code',
-    { schema: { hide: true, params: z.object({ code: z.string() }) } },
+    {
+      config: { rateLimit: redirectLimit(app) },
+      schema: { hide: true, params: z.object({ code: z.string() }) },
+    },
     async (request, reply) => {
       const { code } = request.params;
       if (!CODE_PATTERN.test(code)) throw NotFound('Short link');

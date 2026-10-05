@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { apiKeys, users } from '../../db/schema.js';
 import { Conflict, NotFound, Unauthorized } from '../../lib/errors.js';
 import { hashApiKey } from './auth.plugin.js';
+import { authLimit } from '../../plugins/rate-limit.js';
 
 const BCRYPT_ROUNDS = 12;
 
@@ -48,6 +49,7 @@ export const authRoutes: FastifyPluginAsyncZod = async (app) => {
   app.post(
     '/auth/register',
     {
+      config: { rateLimit: authLimit(app) },
       schema: {
         tags: ['auth'],
         summary: 'Create an account',
@@ -72,6 +74,7 @@ export const authRoutes: FastifyPluginAsyncZod = async (app) => {
   app.post(
     '/auth/login',
     {
+      config: { rateLimit: authLimit(app) },
       schema: {
         tags: ['auth'],
         summary: 'Log in and receive a JWT',
@@ -91,7 +94,7 @@ export const authRoutes: FastifyPluginAsyncZod = async (app) => {
   app.get(
     '/auth/me',
     {
-      onRequest: [app.authenticate],
+      preValidation: [app.authenticate],
       schema: {
         tags: ['auth'],
         security: [{ bearerAuth: [] }, { apiKey: [] }],
@@ -108,7 +111,7 @@ export const authRoutes: FastifyPluginAsyncZod = async (app) => {
   app.post(
     '/api-keys',
     {
-      onRequest: [app.authenticate],
+      preValidation: [app.authenticate],
       schema: {
         tags: ['api-keys'],
         summary: 'Create an API key (the secret is shown only once)',
@@ -144,7 +147,7 @@ export const authRoutes: FastifyPluginAsyncZod = async (app) => {
   app.get(
     '/api-keys',
     {
-      onRequest: [app.authenticate],
+      preValidation: [app.authenticate],
       schema: {
         tags: ['api-keys'],
         security: [{ bearerAuth: [] }],
@@ -170,7 +173,7 @@ export const authRoutes: FastifyPluginAsyncZod = async (app) => {
   app.delete(
     '/api-keys/:id',
     {
-      onRequest: [app.authenticate],
+      preValidation: [app.authenticate],
       schema: {
         tags: ['api-keys'],
         summary: 'Revoke an API key',

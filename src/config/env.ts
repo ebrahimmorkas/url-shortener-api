@@ -24,7 +24,12 @@ export const configSchema = z.object({
   REDIRECT_CACHE_TTL_SECONDS: z.coerce.number().int().positive().default(300),
   CLICK_FLUSH_INTERVAL_MS: z.coerce.number().int().positive().default(1000),
   CLICK_BATCH_SIZE: z.coerce.number().int().positive().default(500),
+  /** Requests per minute per caller (API key or IP). */
   RATE_LIMIT_MAX: z.coerce.number().int().positive().default(120),
+  /** Stricter limit for login and registration, to slow down credential stuffing. */
+  AUTH_RATE_LIMIT_MAX: z.coerce.number().int().positive().default(10),
+  /** Redirects are the hot path and get a much higher allowance. */
+  REDIRECT_RATE_LIMIT_MAX: z.coerce.number().int().positive().default(600),
 });
 
 export type Config = z.infer<typeof configSchema>;
